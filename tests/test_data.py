@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 
-from skin_type_classifier.data import MyDataset
+from skin_type_classifier.data.data import MyDataset
 
 
 def test_my_dataset():
