@@ -34,6 +34,8 @@ dev = [
     "mypy==1.19.1",
     "mkdocs-material==9.7.1",
     "mkdocstrings-python==2.0.1",
+    "dvc>=3.66.1",
+    "dvc-gs>=3.0.2",
 ]
 
 
