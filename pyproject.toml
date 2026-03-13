@@ -18,23 +18,23 @@ classifiers = [
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi==0.115.6",
+    "fastapi==0.135.1",
     "pandas>=3.0.1",
-    "torch==2.6.0",
-    "typer==0.15.1",
+    "torch==2.10.0",
+    "typer==0.24.1",
     "uvicorn==0.41.0",
 ]
 
 [dependency-groups]
 dev = [
-    "coverage==7.6.9",
+    "coverage==7.13.4",
     "invoke==2.2.1",
-    "pre-commit==4.1.0",
+    "pre-commit==4.5.1",
     "pytest==9.0.2",
     "ruff==0.15.5",
     "mypy==1.19.1",
-    "mkdocs-material==9.7.1",
-    "mkdocstrings-python==2.0.1",
+    "mkdocs-material==9.7.5",
+    "mkdocstrings-python==2.0.3",
     "dvc>=3.66.1",
     "dvc-gs>=3.0.2",
     "ipykernel>=7.2.0",
