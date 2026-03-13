@@ -15,6 +15,12 @@ def preprocess_data(ctx: Context) -> None:
 
 
 @task
+def build_datasets(ctx: Context) -> None:
+    """Build consolidated dataset CSVs from cleaned source datasets."""
+    ctx.run(f"uv run src/{PROJECT_NAME}/data/build_datasets.py", echo=True, pty=not WINDOWS)
+
+
+@task
 def train(ctx: Context) -> None:
     """Train model."""
     ctx.run(f"uv run src/{PROJECT_NAME}/train.py", echo=True, pty=not WINDOWS)
