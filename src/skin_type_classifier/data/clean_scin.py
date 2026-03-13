@@ -7,7 +7,7 @@ import pandas as pd
 
 RAW_DIR = Path("data/raw/scin")
 PROCESSED_DIR = Path("data/processed")
-OUTPUT_IMAGE_DIR = PROCESSED_DIR / "scin"
+OUTPUT_IMAGE_DIR = PROCESSED_DIR / "scin/scin_images"
 
 CASES_CSV = RAW_DIR / "scin_cases.csv"
 LABELS_CSV = RAW_DIR / "scin_labels.csv"
