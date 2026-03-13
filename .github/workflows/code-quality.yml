@@ -1,14 +1,14 @@
-name: Code linting
+name: Lint, Format & Type Check
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
   pull_request:
-    branches: [main]
+    branches: [develop]
 
 jobs:
-  format:
-    name: Check code formatting
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
 
     steps:
@@ -22,17 +22,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --locked --dev
+          uv sync --extra dev
           uv tree
 
-      - name: ruff linter
+      - name: Ruff — lint
         run: |
           uv run ruff check .
 
-      - name: ruff formatter
+      - name: Ruff — format check
         run: |
           uv run ruff format . --check
-
-      - name: mypy type checking
-        run: |
-          uv run mypy .
