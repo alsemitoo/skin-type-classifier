@@ -38,6 +38,10 @@ dev = [
     "dvc>=3.66.1",
     "dvc-gs>=3.0.2",
     "ipykernel>=7.2.0",
+    "matplotlib>=3.10.8",
+    "seaborn>=0.13.2",
+    "pillow>=12.1.1",
+    "scikit-learn>=1.8.0",
 ]
 
 
