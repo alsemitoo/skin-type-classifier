@@ -56,18 +56,30 @@ def _process_scin(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with unified columns, one row per image.
     """
+    fst_cols = [
+        "dermatologist_fitzpatrick_skin_type_label_1",
+        "dermatologist_fitzpatrick_skin_type_label_2",
+        "dermatologist_fitzpatrick_skin_type_label_3",
+    ]
     rows = []
     for _, row in df.iterrows():
-        fst = _parse_scin_fst(row["dermatologist_fitzpatrick_skin_type_label_1"])
+        fst = None
+        for col in fst_cols:
+            fst = _parse_scin_fst(row[col])
+            if fst is not None:
+                break
         if fst is None:
             continue
         for col in SCIN_IMAGE_COLS:
             val = row[col]
             if pd.isna(val) or not str(val).strip():
                 continue
+            image_path = _scin_image_path(val)
+            if not (PROCESSED_DIR / image_path).exists():
+                continue
             rows.append(
                 {
-                    "image_path": _scin_image_path(val),
+                    "image_path": image_path,
                     "source": "scin",
                     "fitzpatrick_skin_type": fst,
                     "diagnosis": row["weighted_skin_condition_label"],
@@ -75,7 +87,8 @@ def _process_scin(df: pd.DataFrame) -> pd.DataFrame:
                     "sex": row["sex_at_birth"],
                 }
             )
-    return pd.DataFrame(rows, columns=UNIFIED_COLUMNS)
+    result = pd.DataFrame(rows, columns=UNIFIED_COLUMNS)
+    return result.drop_duplicates(subset=["image_path"], keep="first")
 
 
 def _process_pad_ufes(df: pd.DataFrame) -> pd.DataFrame:
