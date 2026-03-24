@@ -8,87 +8,44 @@ PROCESSED_DIR = Path("data/processed")
 
 SCIN_CSV = PROCESSED_DIR / "scin" / "cleaned_scin_metadata.csv"
 PAD_UFES_CSV = PROCESSED_DIR / "pad_ufes" / "cleaned_pad_ufes_metadata.csv"
-FITZPATRICK_CSV = PROCESSED_DIR / "fitzpatrick_17k" / "cleaned_fitzpatrick_17k_metadata.csv"
 
 FULL_DATASET_CSV = PROCESSED_DIR / "full_dataset.csv"
-NO_FITZ_DATASET_CSV = PROCESSED_DIR / "dataset_without_fitzpatrick.csv"
 
-SCIN_IMAGE_COLS = ["image_1_path", "image_2_path", "image_3_path"]
-UNIFIED_COLUMNS = ["image_path", "source", "fitzpatrick_skin_type", "diagnosis", "age", "sex"]
-
-
-def _scin_image_path(csv_path: str) -> str:
-    """Convert SCIN CSV image path (dataset/images/<id>.png) to processed-relative path.
-
-    Args:
-        csv_path: Raw path from the SCIN CSV, e.g. 'dataset/images/-123.png'.
-
-    Returns:
-        Path relative to data/processed/, e.g. 'scin/scin_images/-123.png'.
-    """
-    filename = Path(str(csv_path).strip()).name
-    return f"scin/scin_images/{filename}"
-
-
-def _parse_scin_fst(label: str) -> int | None:
-    """Parse a SCIN Fitzpatrick label like 'FST2' into an integer.
-
-    Args:
-        label: Fitzpatrick label string, e.g. 'FST1' through 'FST6'.
-
-    Returns:
-        Integer skin type (1-6), or None if unparseable.
-    """
-    if pd.isna(label) or not str(label).startswith("FST"):
-        return None
-    try:
-        return int(str(label).removeprefix("FST"))
-    except ValueError:
-        return None
+UNIFIED_COLUMNS = [
+    "image_path",
+    "source",
+    "fitzpatrick_skin_type",
+    "diagnosis",
+    "age",
+    "sex",
+]
 
 
 def _process_scin(df: pd.DataFrame) -> pd.DataFrame:
-    """Transform SCIN data into the unified schema, exploding multi-image rows.
+    """Transform SCIN per-image data into the unified schema.
 
     Args:
-        df: Raw SCIN cleaned metadata DataFrame.
+        df: SCIN cleaned metadata DataFrame (already one row per image).
 
     Returns:
-        DataFrame with unified columns, one row per image.
+        DataFrame with unified columns.
     """
-    fst_cols = [
-        "dermatologist_fitzpatrick_skin_type_label_1",
-        "dermatologist_fitzpatrick_skin_type_label_2",
-        "dermatologist_fitzpatrick_skin_type_label_3",
-    ]
-    rows = []
-    for _, row in df.iterrows():
-        fst = None
-        for col in fst_cols:
-            fst = _parse_scin_fst(row[col])
-            if fst is not None:
-                break
-        if fst is None:
-            continue
-        for col in SCIN_IMAGE_COLS:
-            val = row[col]
-            if pd.isna(val) or not str(val).strip():
-                continue
-            image_path = _scin_image_path(val)
-            if not (PROCESSED_DIR / image_path).exists():
-                continue
-            rows.append(
-                {
-                    "image_path": image_path,
-                    "source": "scin",
-                    "fitzpatrick_skin_type": fst,
-                    "diagnosis": row["weighted_skin_condition_label"],
-                    "age": row["age_group"],
-                    "sex": row["sex_at_birth"],
-                }
-            )
-    result = pd.DataFrame(rows, columns=UNIFIED_COLUMNS)
-    return result.drop_duplicates(subset=["image_path"], keep="first")
+    result = pd.DataFrame(
+        {
+            "image_path": "scin/images/" + df["image_filename"],
+            "source": "scin",
+            "fitzpatrick_skin_type": df["fitzpatrick_skin_type"].astype(int),
+            "diagnosis": df["diagnosis"],
+            "age": df["age"].astype(str),
+            "sex": df["sex"],
+        },
+        columns=UNIFIED_COLUMNS,
+    )
+    exists_mask = result["image_path"].apply(lambda p: (PROCESSED_DIR / p).exists())
+    dropped = (~exists_mask).sum()
+    if dropped > 0:
+        print(f"WARNING: dropped {dropped} SCIN rows with missing image files")
+    return result[exists_mask].drop_duplicates(subset=["image_path"], keep="first")
 
 
 def _process_pad_ufes(df: pd.DataFrame) -> pd.DataFrame:
@@ -114,50 +71,20 @@ def _process_pad_ufes(df: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def _process_fitzpatrick(df: pd.DataFrame) -> pd.DataFrame:
-    """Transform Fitzpatrick 17k data into the unified schema.
-
-    Args:
-        df: Raw Fitzpatrick 17k cleaned metadata DataFrame.
-
-    Returns:
-        DataFrame with unified columns.
-    """
-    result = pd.DataFrame(
-        {
-            "image_path": "fitzpatrick_17k/images/" + df["new_img_name"],
-            "source": "fitzpatrick_17k",
-            "fitzpatrick_skin_type": df["fitzpatrick"].astype(int),
-            "diagnosis": df["label"],
-            "age": pd.NA,
-            "sex": pd.NA,
-        },
-        columns=UNIFIED_COLUMNS,
-    )
-    return result
-
-
 def build_datasets() -> None:
     """Build consolidated dataset CSVs from cleaned source datasets."""
     scin_df = pd.read_csv(SCIN_CSV)
     pad_ufes_df = pd.read_csv(PAD_UFES_CSV)
-    fitzpatrick_df = pd.read_csv(FITZPATRICK_CSV)
 
     scin = _process_scin(scin_df)
     pad_ufes = _process_pad_ufes(pad_ufes_df)
-    fitzpatrick = _process_fitzpatrick(fitzpatrick_df)
 
-    print(f"SCIN: {len(scin)} rows (exploded from {len(scin_df)} cases)")
+    print(f"SCIN: {len(scin)} rows")
     print(f"PAD-UFES: {len(pad_ufes)} rows")
-    print(f"Fitzpatrick 17k: {len(fitzpatrick)} rows")
 
-    full = pd.concat([scin, pad_ufes, fitzpatrick], ignore_index=True)
-    full.to_csv(FULL_DATASET_CSV, index=False)
-    print(f"Wrote full dataset: {len(full)} rows -> {FULL_DATASET_CSV}")
-
-    no_fitz = pd.concat([scin, pad_ufes], ignore_index=True)
-    no_fitz.to_csv(NO_FITZ_DATASET_CSV, index=False)
-    print(f"Wrote dataset without Fitzpatrick: {len(no_fitz)} rows -> {NO_FITZ_DATASET_CSV}")
+    res_dataset = pd.concat([scin, pad_ufes], ignore_index=True)
+    res_dataset.to_csv(FULL_DATASET_CSV, index=False)
+    print(f"Wrote dataset without Fitzpatrick: {len(res_dataset)} rows -> {FULL_DATASET_CSV}")
 
 
 if __name__ == "__main__":

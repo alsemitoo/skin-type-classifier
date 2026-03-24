@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-RAW_DIR = Path("data/raw/pad_ufes")
+RAW_DIR = Path("data/raw/pad_ufes")  # Non-existant anymore for storage reasons
 PROCESSED_DIR = Path("data/processed/pad_ufes")
 OUTPUT_IMAGE_DIR = PROCESSED_DIR / "images"
 
