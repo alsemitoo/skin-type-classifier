@@ -61,5 +61,12 @@ explicit = true
 [tool.ruff]
 line-length = 120
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Pure unit tests with no external data dependencies",
+    "data: Tests that require data/processed/full_dataset.csv (DVC-tracked)",
+]
+
 [tool.coverage.run]
 omit = ["tests/*"]
