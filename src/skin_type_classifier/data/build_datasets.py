@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 PROCESSED_DIR = Path("data/processed")
@@ -18,7 +19,35 @@ UNIFIED_COLUMNS = [
     "diagnosis",
     "age",
     "sex",
+    "group_id",
+    "revised_fitzpatrick",
 ]
+
+
+def _compute_revised_fst_scin(df: pd.DataFrame) -> pd.Series:
+    """Compute majority-voted Fitzpatrick skin type per SCIN case.
+
+    For each case_id, takes the mode of fitzpatrick_skin_type across all
+    images belonging to that case. In case of a tie, computes the median
+    of the tied values and floors to int (standard for ordinal scales).
+
+    Args:
+        df: SCIN cleaned metadata with case_id and fitzpatrick_skin_type columns.
+
+    Returns:
+        Series aligned with df's index containing the revised FST value per row.
+    """
+
+    def _resolve_fst(fst_series: pd.Series) -> int:
+        counts = fst_series.value_counts()
+        max_count = counts.max()
+        modes = counts[counts == max_count].index
+        if len(modes) == 1:
+            return int(modes[0])
+        return int(np.floor(np.median(modes)))
+
+    case_to_revised = df.groupby("case_id")["fitzpatrick_skin_type"].apply(_resolve_fst)
+    return df["case_id"].map(case_to_revised).astype(int)
 
 
 def _process_scin(df: pd.DataFrame) -> pd.DataFrame:
@@ -30,6 +59,8 @@ def _process_scin(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         DataFrame with unified columns.
     """
+    revised_fst = _compute_revised_fst_scin(df)
+
     result = pd.DataFrame(
         {
             "image_path": "scin/images/" + df["image_filename"],
@@ -38,6 +69,8 @@ def _process_scin(df: pd.DataFrame) -> pd.DataFrame:
             "diagnosis": df["diagnosis"],
             "age": df["age"].astype(str),
             "sex": df["sex"],
+            "group_id": df["case_id"].astype(str),
+            "revised_fitzpatrick": revised_fst,
         },
         columns=UNIFIED_COLUMNS,
     )
@@ -65,6 +98,8 @@ def _process_pad_ufes(df: pd.DataFrame) -> pd.DataFrame:
             "diagnosis": df["diagnostic"],
             "age": df["age"].astype(str),
             "sex": df["gender"],
+            "group_id": df["patient_id"].astype(str),
+            "revised_fitzpatrick": df["fitspatrick"].astype(int),
         },
         columns=UNIFIED_COLUMNS,
     )
@@ -84,7 +119,7 @@ def build_datasets() -> None:
 
     res_dataset = pd.concat([scin, pad_ufes], ignore_index=True)
     res_dataset.to_csv(FULL_DATASET_CSV, index=False)
-    print(f"Wrote dataset without Fitzpatrick: {len(res_dataset)} rows -> {FULL_DATASET_CSV}")
+    print(f"Wrote unified dataset: {len(res_dataset)} rows -> {FULL_DATASET_CSV}")
 
 
 if __name__ == "__main__":
