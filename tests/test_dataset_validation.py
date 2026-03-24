@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from skin_type_classifier.data.build_datasets import UNIFIED_COLUMNS
+from skin_type_classifier.data.splits import stratified_group_split
 
 EXPECTED_SOURCES = {"scin", "pad_ufes"}
 
@@ -95,21 +96,43 @@ class TestDatasetDistribution:
 
 @pytest.mark.data
 class TestDataLeakagePrevention:
-    """Placeholder tests for train/test split leakage detection.
+    """Verify group-aware stratified splitting prevents patient/case leakage."""
 
-    These tests will become meaningful once train/val/test splitting is implemented.
-    They document the critical invariant: no group_id should appear in both train
-    and test sets (to prevent patient/case-level leakage).
-    """
+    @pytest.fixture()
+    def splits(self, full_dataset: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        return stratified_group_split(full_dataset)
 
-    @pytest.mark.skip(reason="Train/test split not yet implemented")
-    def test_no_group_id_overlap_between_train_and_test(self) -> None:
+    def test_no_group_id_overlap_between_train_and_test(
+        self, splits: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    ) -> None:
         """No group_id should appear in both train and test sets."""
+        train_df, _, test_df = splits
+        overlap = set(train_df["group_id"]) & set(test_df["group_id"])
+        assert not overlap, f"Group IDs leaked between train and test: {overlap}"
 
-    @pytest.mark.skip(reason="Train/test split not yet implemented")
-    def test_no_group_id_overlap_between_train_and_val(self) -> None:
+    def test_no_group_id_overlap_between_train_and_val(
+        self, splits: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    ) -> None:
         """No group_id should appear in both train and validation sets."""
+        train_df, val_df, _ = splits
+        overlap = set(train_df["group_id"]) & set(val_df["group_id"])
+        assert not overlap, f"Group IDs leaked between train and val: {overlap}"
 
-    @pytest.mark.skip(reason="Fairness evaluation not yet implemented")
-    def test_fst_distribution_similar_across_splits(self) -> None:
+    def test_no_group_id_overlap_between_val_and_test(
+        self, splits: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    ) -> None:
+        """No group_id should appear in both validation and test sets."""
+        _, val_df, test_df = splits
+        overlap = set(val_df["group_id"]) & set(test_df["group_id"])
+        assert not overlap, f"Group IDs leaked between val and test: {overlap}"
+
+    def test_fst_distribution_similar_across_splits(
+        self, splits: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
+    ) -> None:
         """FST distribution should be roughly similar in train/val/test (stratification check)."""
+        train_df, val_df, test_df = splits
+        for split_df, name in [(train_df, "train"), (val_df, "val"), (test_df, "test")]:
+            present_types = set(split_df["revised_fitzpatrick"].unique())
+            assert present_types == {1, 2, 3, 4, 5, 6}, (
+                f"{name} split missing FST types: {{1,2,3,4,5,6}} - {present_types}"
+            )

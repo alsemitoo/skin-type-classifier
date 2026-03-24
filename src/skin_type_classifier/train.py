@@ -1,5 +1,5 @@
 # def train():
-# dataset = MyDataset("data/raw")
+# dataset = FSTDataset(df, data_root, transform=get_train_transform())
 # model = Model()
 # add rest of your training code here
 
