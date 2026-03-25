@@ -1,0 +1,3 @@
+- learning_curve.fractions=[1.0]
+- learning_curve.seeds=[42]
+- training.max_epochs=2

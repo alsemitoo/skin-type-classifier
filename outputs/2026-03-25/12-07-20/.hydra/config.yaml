@@ -1,0 +1,27 @@
+data:
+  csv_path: data/processed/full_dataset.csv
+  data_root: data/processed
+  test_size: 0.15
+  val_size: 0.15
+  split_seed: 42
+model:
+  backbone: efficientnet_v2_m
+  num_classes: 6
+  dropout: 0.3
+  freeze_backbone: true
+training:
+  batch_size: 128
+  num_workers: 4
+  max_epochs: 5
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler_patience: 3
+  scheduler_factor: 0.5
+  early_stopping_patience: 7
+  early_stopping_min_delta: 0.0001
+learning_curve:
+  fractions:
+  - 1.0
+  seeds:
+  - 42
+  output_dir: reports/learning_curve

@@ -1,0 +1,14 @@
+[2026-03-25 10:58:54,450][skin_type_classifier.learning_curve][INFO] - Using Intel XPU: Intel(R) Arc(TM) Graphics
+[2026-03-25 10:58:54,464][skin_type_classifier.learning_curve][INFO] - Splits: train=4823, val=1042, test=1040
+[2026-03-25 10:58:54,464][skin_type_classifier.learning_curve][INFO] - --- Trial 1/1: fraction=1.0, seed=42 ---
+[2026-03-25 10:58:54,464][skin_type_classifier.learning_curve][INFO] - Trial fraction=1.0, seed=42: 4823 training images
+[2026-03-25 11:01:30,390][skin_type_classifier.train][INFO] - Epoch   1/2 | train_loss=1.6345 | val_loss=1.9210 | val_f1=0.0865 | lr=1.00e-04 | 155.1s
+[2026-03-25 11:04:01,704][skin_type_classifier.train][INFO] - Epoch   2/2 | train_loss=1.5250 | val_loss=1.8855 | val_f1=0.0826 | lr=1.00e-04 | 150.8s
+[2026-03-25 11:04:44,374][skin_type_classifier.learning_curve][INFO] -
+Learning Curve Summary:
+         test_macro_f1     test_accuracy
+                  mean std          mean std
+fraction
+1.0           0.061878 NaN      0.061538 NaN
+[2026-03-25 11:04:44,374][__main__][INFO] - Total trials: 1
+[2026-03-25 11:04:44,375][__main__][INFO] - Best test macro F1: 0.0619

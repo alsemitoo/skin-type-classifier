@@ -1,0 +1,20 @@
+[
+  {
+    "fraction": 1.0,
+    "seed": 42,
+    "n_train_images": 4823,
+    "n_train_groups": 3602,
+    "best_epoch": 5,
+    "val_loss": 1.4502782344818115,
+    "val_macro_f1": 0.24374989268355338,
+    "val_accuracy": 0.29174664107485604,
+    "test_accuracy": 0.325,
+    "test_macro_f1": 0.2713938721669052,
+    "test_per_class_f1_0": 0.16842105263157894,
+    "test_per_class_f1_1": 0.4860557768924303,
+    "test_per_class_f1_2": 0.19310344827586207,
+    "test_per_class_f1_3": 0.313953488372093,
+    "test_per_class_f1_4": 0.31868131868131866,
+    "test_per_class_f1_5": 0.14814814814814814
+  }
+]
